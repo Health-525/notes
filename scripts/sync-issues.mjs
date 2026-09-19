@@ -113,7 +113,12 @@ function toMarkdown(issue) {
   return `${frontmatter}\n\n# ${issue.title}\n\n${body}\n`;
 }
 
-function buildIndex(issues) {
+/**
+ * 按标签分组的索引。
+ * linkPrefix 决定链接的相对基准：README 在仓库根，需要 `notes/` 前缀；
+ * 站点首页本身就在 OUT_DIR 里，前缀为空。
+ */
+function buildIndex(issues, linkPrefix) {
   if (issues.length === 0) return '_还没有笔记。开一个 Issue 并打上 `note` 标签即可。_';
 
   const byTag = new Map();
@@ -135,11 +140,11 @@ function buildIndex(issues) {
       .slice()
       .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
     for (const issue of entries) {
-      const file = `${OUT_DIR}/${toFileName(issue)}`;
+      const file = `${linkPrefix}${toFileName(issue)}`;
       lines.push(
         `- [${issue.title}](${encodeURI(file)}) ` +
-          `· ${issue.updated_at.slice(0, 10)} ` +
-          `· [#${issue.number}](${issue.html_url})`,
+        `· ${issue.updated_at.slice(0, 10)} ` +
+        `· [#${issue.number}](${issue.html_url})`,
       );
     }
     lines.push('');
@@ -164,6 +169,28 @@ async function updateReadme(index) {
   await writeFile(README, `${before}\n\n${index}\n\n${after}`, 'utf8');
 }
 
+/**
+ * 站点首页。MkDocs 用 OUT_DIR 当 docs_dir，必须有 index.md 才能构建，
+ * 所以哪怕一条笔记都没有也要生成它。
+ */
+async function writeSiteIndex(index) {
+  const content = [
+    '---',
+    'title: 笔记',
+    '---',
+    '',
+    '# 笔记',
+    '',
+    '个人知识库。所有内容都是从 GitHub Issues 自动同步生成的。',
+    '',
+    '## 索引',
+    '',
+    index,
+    '',
+  ].join('\n');
+  await writeFile(path.join(OUT_DIR, 'index.md'), content, 'utf8');
+}
+
 async function main() {
   const issues = (await fetchAllIssues()).filter(isPublishable);
 
@@ -175,7 +202,8 @@ async function main() {
     await writeFile(path.join(OUT_DIR, toFileName(issue)), toMarkdown(issue), 'utf8');
   }
 
-  await updateReadme(buildIndex(issues));
+  await writeSiteIndex(buildIndex(issues, ''));
+  await updateReadme(buildIndex(issues, `${OUT_DIR}/`));
   console.log(`已同步 ${issues.length} 条笔记到 ${OUT_DIR}/`);
 }
 

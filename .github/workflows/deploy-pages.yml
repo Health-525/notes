@@ -1,0 +1,55 @@
+name: Deploy site
+
+on:
+  # 手工改 mkdocs.yml / requirements.txt 后重建。
+  push:
+    branches: [main]
+  # GITHUB_TOKEN 产生的提交不会触发 push 事件，所以笔记同步完成后靠 workflow_run 接力。
+  workflow_run:
+    workflows: ['Sync issues to notes']
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # workflow_run 默认检出触发那次 run 的提交，那时同步还没推上来。
+          # 显式取 main 的最新提交，才能拿到刚生成的笔记。
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      # 不加 --strict：笔记正文来自 Issues，里面可能有解析不了的相对链接，
+      # 那只该是警告，不该让整个站点发布失败。
+      - run: mkdocs build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

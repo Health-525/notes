@@ -1,3 +1,5 @@
 node_modules/
+# MkDocs 构建产物，只在 CI 里生成
+site/
 .DS_Store
 Thumbs.db

@@ -1,0 +1,4 @@
+# 固定版本，避免上游更新把站点构建弄坏。
+mkdocs-material==9.7.7
+# 中文搜索分词：装上之后 mkdocs-material 的 search 插件会自动启用。
+jieba==0.42.1

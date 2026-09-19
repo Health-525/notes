@@ -5,6 +5,8 @@ GitHub Actions 会自动把它渲染成 `notes/` 下的 Markdown 文件，并刷
 
 手机上、没装环境的机器上都能写，不用 clone。文件落在仓库里，`grep` 能搜，AI agent 能直接读。
 
+**阅读站点（带全文搜索，支持中文分词）**：<https://health-525.github.io/notes/>
+
 ## 怎么用
 
 - **新增**：[开一个 Issue](../../issues/new?template=note.md)，标题即笔记标题，正文写 Markdown。

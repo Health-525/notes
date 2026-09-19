@@ -1,0 +1,58 @@
+site_name: 笔记
+site_description: 个人知识库，用 GitHub Issues 写入
+# site_url 必填：GitHub Pages 是子路径部署，而且 navigation.instant 依赖它。
+site_url: https://health-525.github.io/notes/
+repo_url: https://github.com/Health-525/notes
+repo_name: Health-525/notes
+# 源头是 Issues 而不是文件，"编辑本页" 会指向错误的地方，关掉。
+edit_uri: ''
+
+# 直接把同步产物当 docs 目录，不再复制一份，避免两处内容漂移。
+docs_dir: notes
+site_dir: site
+
+theme:
+  name: material
+  language: zh
+  features:
+    - navigation.instant
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色模式
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色模式
+
+plugins:
+  # 装了 jieba 之后，内置 search 插件会自动识别中文字符并分词，无需额外配置。
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
