@@ -1,0 +1,52 @@
+name: Sync issues to notes
+
+on:
+  issues:
+    types: [opened, edited, deleted, closed, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# 串行执行，避免连续编辑 issue 时两次 push 互相打架。
+concurrency:
+  group: sync-issues
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    # 公开仓里任何人都能开 issue，所以只放行仓库所有者自己写的条目。
+    # 手动触发本身就需要写权限，不必再判断。
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.issue.author_association == 'OWNER'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # issue 的标题和正文绝不插值进 run:，否则里面的 shell 会在 runner 上执行。
+      # 内容一律由脚本走 API 读进变量。
+      - name: Generate markdown
+        env:
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLISH_LABEL: note
+        run: node scripts/sync-issues.mjs
+
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A notes README.md
+          if git diff --cached --quiet; then
+            echo '没有变化，跳过提交'
+            exit 0
+          fi
+          git commit -m "docs: sync notes from issues"
+          # 期间可能有别的同步已经推上去了，rebase 后重推一次。
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
